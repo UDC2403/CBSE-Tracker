@@ -4,7 +4,7 @@
    ========================================== */
 
 :root {
-  /* Soft pastel Command Centre palette */
+  /* Color Palette - Neutral Slate Base */
   --bg-main: #f6f7fb;
   --bg-card: #ffffff;
   --bg-elevated: #eef0f8;
@@ -22,7 +22,7 @@
   --accent-hover: #5d75a8;
   --accent-light: #e8ecf7;
 
-  /* Status colors: calm but distinguishable */
+  /* Status Colors */
   --status-green: #668f7b;
   --status-green-bg: #eaf2ed;
   --status-green-border: #c8ded0;
@@ -43,12 +43,12 @@
   --status-blue-bg: #e8ecf7;
   --status-blue-border: #cbd5eb;
 
-  /* Stage colors */
+  /* Stage Colors */
   --stage-none: #e2e5ee;
   --stage-progress: #c6a36b;
   --stage-done: #789c88;
 
-  /* Gentle elevation */
+  /* Elevation Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(42, 54, 78, 0.04);
   --shadow-md: 0 4px 10px -3px rgba(42, 54, 78, 0.08), 0 2px 4px -2px rgba(42, 54, 78, 0.05);
   --shadow-lg: 0 12px 24px -8px rgba(42, 54, 78, 0.12);
@@ -59,14 +59,15 @@
   --radius-lg: 17px;
   --radius-full: 9999px;
 
-  /* Font system */
+  /* Font System */
   --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem;    /* 16px min */
+  --font-size-lg: 1.125rem;  /* 18px */
+  --font-size-xl: 1.25rem;   /* 20px */
+  --font-size-2xl: 1.5rem;   /* 24px */
 
+  /* Touch Minimum */
   --touch-min: 44px;
 }
 
@@ -1050,14 +1051,25 @@ body {
 }
 
 
-/* Pastel Command Centre finishing touches */
-.card, .onboarding-card {
-  border-color: var(--border-color);
-  box-shadow: var(--shadow-sm);
-}
-.btn-primary {
-  color: #ffffff;
-}
-.app-header {
-  border-bottom-color: var(--border-color);
-}
+/* Study Command Centre visual refresh */
+.app-header { background: rgba(255,255,255,.92); backdrop-filter: blur(14px); border-bottom-color: var(--border-color); }
+.brand { letter-spacing: -.025em; }
+.app-main { width: min(1180px, 100% - 2rem); margin-inline: auto; padding-top: 1.5rem; padding-bottom: 2rem; }
+.dashboard-top { padding: 1.35rem 1.5rem; margin-bottom: 1.4rem; border: 1px solid #dfe4f1; border-radius: 20px; background: linear-gradient(120deg, #edf1fa 0%, #f5f1fa 52%, #eef4f0 100%); box-shadow: var(--shadow-sm); }
+.dashboard-top h2 { font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -.04em; }
+.subject-card, .card, .todays-focus, .daily-goals-card { border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.subject-card { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.subject-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: #c7d0e5; }
+.subject-card-header { gap: .6rem; }
+.progress-ring-circle { stroke: var(--accent-primary); }
+.todays-focus, .daily-goals-card { background: var(--bg-card); padding: 1.2rem; margin-top: 1.2rem; }
+.daily-goals-heading h3 { letter-spacing: -.02em; }
+.btn { transition: transform .14s ease, box-shadow .14s ease, background .14s ease; }
+.btn-primary { color: #fff; box-shadow: 0 2px 6px rgba(91,112,163,.16); }
+.btn-primary:hover { transform: translateY(-1px); }
+.form-input, input, select, textarea { border-color: var(--border-color); }
+.form-input:focus, input:focus, select:focus, textarea:focus { outline: 3px solid rgba(130,152,201,.18); border-color: var(--border-focus); }
+.app-footer { color: var(--text-muted); }
+@media (max-width: 640px) { .app-main { width: min(100% - 1rem, 1180px); padding-top: .8rem; } .dashboard-top { padding: 1rem; border-radius: 16px; } }
+html.dark .app-header { background: rgba(30,41,59,.94); }
+html.dark .dashboard-top { background: linear-gradient(120deg, #24334b 0%, #302d46 55%, #263d39 100%); border-color: var(--border-color); }
