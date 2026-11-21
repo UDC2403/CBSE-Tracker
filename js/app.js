@@ -64,12 +64,42 @@
           <button type="button" onclick="location.reload();" style="padding:0.6rem 1.2rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer;">
             🔄 Reload Page
           </button>
-          <button type="button" onclick="try{localStorage.clear();}catch(e){} location.reload();" style="padding:0.6rem 1.2rem; background:#334155; color:#f8fafc; border:none; border-radius:6px; font-weight:600; cursor:pointer;">
+          <button type="button" id="clearAppCacheBtn" style="padding:0.6rem 1.2rem; background:#334155; color:#f8fafc; border:none; border-radius:6px; font-weight:600; cursor:pointer;">
             🧹 Clear App Cache & Retry
           </button>
         </div>
       </div>
     `;
+
+    // Recovery must preserve saved progress. Only clear this app's cache and its own worker.
+    const clearCacheButton = appEl.querySelector("#clearAppCacheBtn");
+    clearCacheButton?.addEventListener("click", async () => {
+      try {
+        if ("caches" in window) {
+          const cacheNames = await window.caches.keys();
+          await Promise.all(
+            cacheNames
+              .filter(name => name.startsWith("my-cbse-command-centre-"))
+              .map(name => window.caches.delete(name))
+          );
+        }
+
+        if ("serviceWorker" in navigator) {
+          const expectedWorkerUrl = new URL("./sw.js", window.location.href).href;
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(registration => {
+            const workers = [registration.active, registration.waiting, registration.installing].filter(Boolean);
+            const belongsToThisApp = workers.some(worker => worker.scriptURL === expectedWorkerUrl);
+            return belongsToThisApp ? registration.unregister() : Promise.resolve(false);
+          }));
+        }
+      } catch (cacheError) {
+        console.warn("App cache cleanup could not finish:", cacheError);
+      }
+
+      // Reload regardless; tracker data in localStorage is deliberately untouched.
+      window.location.reload();
+    });
   }
 
   function registerServiceWorker() {
@@ -205,7 +235,7 @@
       <header class="app-header">
         <a href="#" class="brand" data-action="nav-dashboard">
           <img src="assets/icons/logo.svg" alt="Sunil Bhaiya Logo" class="brand-icon" />
-          <span>Sunil Bhaiya</span>
+          <span>My Study Command Centre</span>
         </a>
 
         <div class="header-actions">
@@ -264,13 +294,65 @@
   function renderFooter() {
     return `
       <footer class="app-footer">
-        <div>Built by Sunil Bhaiya</div>
+        <div>Personal study space · Based on Sunil Bhaiya’s CBSE Tracker</div>
       </footer>
     `;
   }
 
   function renderModalContainer() {
     return `<div id="modalOverlay" class="modal-overlay"></div>`;
+  }
+
+  function renderDailyGoals(profile) {
+    const today = window.TrackerStorage.getTodayString();
+    if (!profile.dailyGoals) profile.dailyGoals = {};
+    const goals = Array.isArray(profile.dailyGoals[today]) ? profile.dailyGoals[today] : [];
+    const completed = goals.filter(g => g.done).length;
+    const subjects = ["Science", "Mathematics", "Social Science", "English", "Hindi", "Other"];
+    const types = ["Blind copying", "PW lecture", "Practice", "Revision", "Homework", "Reading", "Other"];
+    return `
+      <section class="daily-goals-card">
+        <div class="daily-goals-heading">
+          <div>
+            <p class="daily-goals-eyebrow">YOUR DAILY GAME PLAN</p>
+            <h3>🎯 Today's Goals</h3>
+            <p class="daily-goals-subtitle">Small wins. Real progress. One task at a time.</p>
+          </div>
+          <div class="daily-goals-count"><strong>${completed}/${goals.length}</strong><span>completed</span></div>
+        </div>
+        <div class="daily-goals-progress"><span style="width:${goals.length ? Math.round(completed / goals.length * 100) : 0}%"></span></div>
+        <form id="dailyGoalForm" class="daily-goal-form">
+          <div class="daily-goal-input-wrap">
+            <label for="dailyGoalTitle">What do you want to finish?</label>
+            <input id="dailyGoalTitle" class="form-input" type="text" maxlength="120" placeholder="e.g. Blind copy 3 pages of Chemistry" required />
+          </div>
+          <div class="daily-goal-fields">
+            <div class="daily-goal-input-wrap">
+              <label for="dailyGoalSubject">Subject</label>
+              <select id="dailyGoalSubject" class="form-input">${subjects.map(x => `<option>${x}</option>`).join("")}</select>
+            </div>
+            <div class="daily-goal-input-wrap">
+              <label for="dailyGoalType">Task type</label>
+              <select id="dailyGoalType" class="form-input">${types.map(x => `<option>${x}</option>`).join("")}</select>
+            </div>
+            <button class="btn btn-primary daily-goal-add" type="submit">＋ Add goal</button>
+          </div>
+        </form>
+        <div class="daily-goal-list">
+          ${goals.length ? goals.map(goal => `
+            <div class="daily-goal-item ${goal.done ? "is-done" : ""}">
+              <button type="button" class="daily-goal-check" data-action="toggle-daily-goal" data-goal-id="${escapeHtml(goal.id)}" aria-label="${goal.done ? "Mark incomplete" : "Mark complete"}">${goal.done ? "✓" : ""}</button>
+              <div class="daily-goal-copy">
+                <strong>${escapeHtml(goal.title)}</strong>
+                <span>${escapeHtml(goal.subject)} · ${escapeHtml(goal.type)}</span>
+              </div>
+              <button type="button" class="daily-goal-delete" data-action="delete-daily-goal" data-goal-id="${escapeHtml(goal.id)}" aria-label="Delete goal" title="Delete goal">×</button>
+            </div>
+          `).join("") : `<div class="daily-goals-empty"><span>📝</span><strong>Your page is blank. Let's change that.</strong><p>Add one small, specific goal to get started.</p></div>`}
+        </div>
+        ${goals.length && completed === goals.length ? `<p class="daily-goals-win">🏆 Every goal completed. That's how consistency is built.</p>` : ""}
+      </section>
+    `;
   }
 
   function renderDashboardScreen(profile) {
@@ -407,6 +489,8 @@
         `}
       </div>
     `;
+
+    html += renderDailyGoals(profile);
 
     return html;
   }
@@ -958,6 +1042,21 @@
         const { subjectId, chapterId, stageKey } = targetAction.dataset;
         window.TrackerStorage.updateChapterStage(state, profile.id, subjectId, chapterId, stageKey);
         render();
+      } else if (action === "toggle-daily-goal" || action === "delete-daily-goal") {
+        const profile = window.TrackerStorage.getActiveProfile(state);
+        if (!profile) return;
+        const today = window.TrackerStorage.getTodayString();
+        if (!profile.dailyGoals) profile.dailyGoals = {};
+        if (!Array.isArray(profile.dailyGoals[today])) profile.dailyGoals[today] = [];
+        const goalId = targetAction.dataset.goalId;
+        if (action === "toggle-daily-goal") {
+          const goal = profile.dailyGoals[today].find(g => g.id === goalId);
+          if (goal) goal.done = !goal.done;
+        } else {
+          profile.dailyGoals[today] = profile.dailyGoals[today].filter(g => g.id !== goalId);
+        }
+        window.TrackerStorage.saveState(state);
+        render();
       } else if (action === "view-pdf") {
         const { title, pdfPath } = targetAction.dataset;
         openPdfModal(title, pdfPath);
@@ -1029,6 +1128,30 @@
     const backupBannerBtn = document.getElementById("downloadBackupNudgeBtn");
     if (backupBannerBtn) {
       backupBannerBtn.addEventListener("click", openExportModal);
+    }
+
+    const dailyGoalForm = document.getElementById("dailyGoalForm");
+    if (dailyGoalForm) {
+      dailyGoalForm.addEventListener("submit", e => {
+        e.preventDefault();
+        const profile = window.TrackerStorage.getActiveProfile(state);
+        if (!profile) return;
+        const title = document.getElementById("dailyGoalTitle").value.trim();
+        if (!title) return;
+        const today = window.TrackerStorage.getTodayString();
+        if (!profile.dailyGoals) profile.dailyGoals = {};
+        if (!Array.isArray(profile.dailyGoals[today])) profile.dailyGoals[today] = [];
+        profile.dailyGoals[today].push({
+          id: `goal_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          title,
+          subject: document.getElementById("dailyGoalSubject").value,
+          type: document.getElementById("dailyGoalType").value,
+          done: false,
+          createdAt: new Date().toISOString()
+        });
+        window.TrackerStorage.saveState(state);
+        render();
+      });
     }
 
     if (currentScreen === "settings") {
@@ -1597,12 +1720,44 @@
     }
   }
 
+  function generateResetChallenge() {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*_-+=?";
+    const length = 24;
+    const cryptoApi = window.crypto;
+    if (!cryptoApi || typeof cryptoApi.getRandomValues !== "function") {
+      throw new Error("Secure random generation is unavailable in this browser context.");
+    }
+
+    // Rejection sampling avoids modulo bias when selecting characters.
+    const limit = Math.floor(256 / alphabet.length) * alphabet.length;
+    let challenge = "";
+    while (challenge.length < length) {
+      const bytes = new Uint8Array(32);
+      cryptoApi.getRandomValues(bytes);
+      for (const byte of bytes) {
+        if (byte >= limit) continue;
+        challenge += alphabet[byte % alphabet.length];
+        if (challenge.length === length) break;
+      }
+    }
+    return challenge;
+  }
+
   function promptResetAllData() {
     const overlay = document.getElementById("modalOverlay");
     if (!overlay) return;
 
+    let challenge;
+    try {
+      challenge = generateResetChallenge();
+    } catch (err) {
+      console.error("Could not generate reset confirmation challenge:", err);
+      showCustomAlertModal("Reset Unavailable", "This browser could not generate a secure confirmation code. Please use an updated browser and try again.");
+      return;
+    }
+
     overlay.innerHTML = `
-      <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-content" style="max-width: 480px;">
         <div class="modal-header">
           <h3 style="margin:0; color:var(--status-red);">🚨 Reset All App Data</h3>
           <button type="button" id="closeResetModalBtn" class="btn btn-sm btn-secondary">✕ Close</button>
@@ -1610,17 +1765,18 @@
         <div class="modal-body">
           <div class="modal-danger-icon">💣</div>
           <p style="text-align:center; font-weight:600; margin-bottom:0.5rem; color:var(--status-red);">
-            WARNING: This will delete ALL profiles and progress on this device!
+            FINAL WARNING: This permanently removes every profile, study record, saved setting and tracker preference on this browser.
           </p>
           <p class="confirm-input-instruction text-center">
-            To confirm, type <strong>DELETE</strong> in the box below:
+            Type the exact 24-character code shown below. It changes every time this confirmation is opened.
           </p>
-          <input type="text" id="confirmResetInput" class="form-input" placeholder="DELETE" autocomplete="off" style="text-align:center;" />
-          <div id="resetErrorMsg" class="confirm-error-msg text-center">Confirmation failed. You must type "DELETE".</div>
-
+          <div id="resetChallengeCode" aria-label="Reset confirmation code" style="margin:0.75rem 0 1rem; padding:0.9rem 0.6rem; border:1px dashed var(--status-red); border-radius:8px; background:var(--bg-secondary); text-align:center; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:1.05rem; font-weight:800; letter-spacing:0.09em; overflow-wrap:anywhere; user-select:none; -webkit-user-select:none;">${challenge}</div>
+          <input type="text" id="confirmResetInput" class="form-input" placeholder="Enter the code exactly" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text" style="text-align:center; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;" />
+          <div id="resetErrorMsg" class="confirm-error-msg text-center" role="status" aria-live="polite">The code does not match. Check every character and try again.</div>
+          <p class="text-center" style="font-size:0.82rem; color:var(--text-secondary); margin-top:0.75rem;">This cannot be undone. Export a backup first if you may need this data later.</p>
           <div class="modal-footer-actions">
             <button type="button" id="cancelResetBtn" class="btn btn-secondary">Cancel</button>
-            <button type="button" id="confirmResetBtn" class="btn btn-danger">Reset Everything</button>
+            <button type="button" id="confirmResetBtn" class="btn btn-danger" disabled>Reset Everything</button>
           </div>
         </div>
       </div>
@@ -1629,34 +1785,54 @@
     overlay.classList.add("open");
 
     const inputEl = document.getElementById("confirmResetInput");
+    const codeEl = document.getElementById("resetChallengeCode");
     const errorEl = document.getElementById("resetErrorMsg");
+    const confirmBtn = document.getElementById("confirmResetBtn");
     if (inputEl) setTimeout(() => inputEl.focus(), 50);
+
+    // The code is intentionally not selectable/copyable; pasted or dropped text is rejected.
+    codeEl?.addEventListener("copy", event => event.preventDefault());
+    codeEl?.addEventListener("cut", event => event.preventDefault());
+    codeEl?.addEventListener("contextmenu", event => event.preventDefault());
+    inputEl?.addEventListener("paste", event => event.preventDefault());
+    inputEl?.addEventListener("drop", event => event.preventDefault());
 
     const closeModal = () => overlay.classList.remove("open");
     document.getElementById("closeResetModalBtn")?.addEventListener("click", closeModal);
     document.getElementById("cancelResetBtn")?.addEventListener("click", closeModal);
 
-    document.getElementById("confirmResetBtn")?.addEventListener("click", () => {
-      const val = inputEl ? inputEl.value.trim() : "";
-      if (val === "DELETE") {
-        closeModal();
-        state = window.TrackerStorage.resetAllData();
-        showCustomAlertModal("Reset Complete", "All app data has been reset.", () => {
-          currentScreen = "onboarding";
-          render();
-        });
-      } else {
-        if (errorEl) errorEl.classList.add("visible");
-      }
+    inputEl?.addEventListener("input", () => {
+      const matches = inputEl.value === challenge;
+      if (confirmBtn) confirmBtn.disabled = !matches;
+      if (errorEl) errorEl.classList.remove("visible");
     });
 
-    if (inputEl) {
-      inputEl.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          document.getElementById("confirmResetBtn")?.click();
-        }
+    confirmBtn?.addEventListener("click", () => {
+      if (!inputEl || inputEl.value !== challenge) {
+        if (errorEl) errorEl.classList.add("visible");
+        if (confirmBtn) confirmBtn.disabled = true;
+        return;
+      }
+
+      closeModal();
+      state = window.TrackerStorage.resetAllData();
+      // Theme is the only separate tracker preference stored outside the main state record.
+      try {
+        localStorage.removeItem("cbse_tracker_theme");
+      } catch (storageError) {
+        console.warn("Could not clear saved theme during factory reset:", storageError);
+      }
+      showCustomAlertModal("Reset Complete", "All tracker profiles, progress and saved preferences have been reset.", () => {
+        currentScreen = "onboarding";
+        render();
       });
-    }
+    });
+
+    inputEl?.addEventListener("keydown", event => {
+      if (event.key === "Enter" && confirmBtn && !confirmBtn.disabled) {
+        confirmBtn.click();
+      }
+    });
   }
 
   function showDiagnosticModal(text, isCopied) {
