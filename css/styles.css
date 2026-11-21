@@ -1,73 +1,72 @@
 /* ==========================================
    CBSE CLASS 9 & 10 STUDY TRACKER
-   Design System & Stylesheet — Sunil Bhaiya Edition
+   Design System & Stylesheet â€” Sunil Bhaiya Edition
    ========================================== */
 
 :root {
-  /* Color Palette - Neutral Slate Base */
-  --bg-main: #f8fafc;
+  /* Soft pastel Command Centre palette */
+  --bg-main: #f6f7fb;
   --bg-card: #ffffff;
-  --bg-elevated: #f1f5f9;
-  --surface-secondary: #f1f5f9;
+  --bg-elevated: #eef0f8;
+  --surface-secondary: #f0f1f8;
   --bg-input: #ffffff;
-  --border-color: #e2e8f0;
-  --border-focus: #0284c7;
+  --border-color: #dfe3ef;
+  --border-focus: #8298c9;
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  --text-primary: #273247;
+  --text-secondary: #56627a;
+  --text-muted: #78839a;
   --text-inverse: #ffffff;
 
-  --accent-primary: #0284c7;
-  --accent-hover: #0369a1;
-  --accent-light: #e0f2fe;
+  --accent-primary: #7189bd;
+  --accent-hover: #5d75a8;
+  --accent-light: #e8ecf7;
 
-  /* Status Colors */
-  --status-green: #10b981;
-  --status-green-bg: #ecfdf5;
-  --status-green-border: #a7f3d0;
+  /* Status colors: calm but distinguishable */
+  --status-green: #668f7b;
+  --status-green-bg: #eaf2ed;
+  --status-green-border: #c8ded0;
 
-  --status-amber: #f59e0b;
-  --status-amber-bg: #fffbeb;
-  --status-amber-border: #fde68a;
+  --status-amber: #ad8950;
+  --status-amber-bg: #f7f0e3;
+  --status-amber-border: #e9d8b7;
 
-  --status-red: #ef4444;
-  --status-red-bg: #fef2f2;
-  --status-red-border: #fca5a5;
+  --status-red: #b86e72;
+  --status-red-bg: #f8ebec;
+  --status-red-border: #e8c9cc;
 
-  --status-grey: #64748b;
-  --status-grey-bg: #f1f5f9;
-  --status-grey-border: #cbd5e1;
+  --status-grey: #78839a;
+  --status-grey-bg: #eef0f5;
+  --status-grey-border: #d8dce6;
 
-  --status-blue: #0284c7;
-  --status-blue-bg: #e0f2fe;
-  --status-blue-border: #bae6fd;
+  --status-blue: #7189bd;
+  --status-blue-bg: #e8ecf7;
+  --status-blue-border: #cbd5eb;
 
-  /* Stage Colors */
-  --stage-none: #e2e8f0;
-  --stage-progress: #f59e0b;
-  --stage-done: #10b981;
+  /* Stage colors */
+  --stage-none: #e2e5ee;
+  --stage-progress: #c6a36b;
+  --stage-done: #789c88;
 
-  /* Elevation Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  /* Gentle elevation */
+  --shadow-sm: 0 1px 2px 0 rgba(42, 54, 78, 0.04);
+  --shadow-md: 0 4px 10px -3px rgba(42, 54, 78, 0.08), 0 2px 4px -2px rgba(42, 54, 78, 0.05);
+  --shadow-lg: 0 12px 24px -8px rgba(42, 54, 78, 0.12);
 
   /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-sm: 7px;
+  --radius-md: 12px;
+  --radius-lg: 17px;
   --radius-full: 9999px;
 
-  /* Font System */
+  /* Font system */
   --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-size-sm: 0.875rem; /* 14px */
-  --font-size-base: 1rem;    /* 16px min */
-  --font-size-lg: 1.125rem;  /* 18px */
-  --font-size-xl: 1.25rem;   /* 20px */
-  --font-size-2xl: 1.5rem;   /* 24px */
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
 
-  /* Touch Minimum */
   --touch-min: 44px;
 }
 
@@ -222,7 +221,7 @@ body {
   color: var(--text-primary);
 }
 
-/* Button System — Minimum 44px height for Touch Target compliance */
+/* Button System â€” Minimum 44px height for Touch Target compliance */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -1002,4 +1001,63 @@ body {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   margin: 0 0 0.5rem 0;
+}
+
+/* Daily goals â€” personal planning layer */
+.daily-goals-card {
+  margin: 1.25rem 0;
+  padding: 1.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+.daily-goals-heading { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+.daily-goals-eyebrow { color:var(--accent-primary); font-size:.72rem; font-weight:800; letter-spacing:.12em; margin-bottom:.2rem; }
+.daily-goals-heading h3 { font-size:1.35rem; margin:0; }
+.daily-goals-subtitle { color:var(--text-secondary); font-size:.88rem; margin:.2rem 0 0; }
+.daily-goals-count { min-width:74px; padding:.55rem .7rem; border-radius:12px; background:var(--accent-light); color:var(--accent-primary); text-align:center; }
+.daily-goals-count strong,.daily-goals-count span { display:block; }
+.daily-goals-count strong { font-size:1.25rem; line-height:1.2; }
+.daily-goals-count span { font-size:.7rem; font-weight:700; }
+.daily-goals-progress { height:8px; overflow:hidden; border-radius:99px; background:var(--surface-secondary); margin-bottom:1.1rem; }
+.daily-goals-progress span { display:block; height:100%; border-radius:99px; background:var(--status-green); transition:width .2s ease; }
+.daily-goal-form { padding:1rem; border-radius:var(--radius-md); background:var(--surface-secondary); margin-bottom:1rem; }
+.daily-goal-input-wrap { min-width:0; }
+.daily-goal-input-wrap label { display:block; font-size:.8rem; font-weight:700; margin-bottom:.35rem; }
+.daily-goal-fields { display:grid; grid-template-columns:1fr 1fr auto; gap:.65rem; align-items:end; margin-top:.7rem; }
+.daily-goal-add { min-height:44px; white-space:nowrap; }
+.daily-goal-list { display:grid; gap:.55rem; }
+.daily-goal-item { display:flex; align-items:center; gap:.75rem; padding:.75rem; border:1px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-card); }
+.daily-goal-check { flex:0 0 28px; width:28px; height:28px; border:2px solid var(--border-color); border-radius:9px; background:transparent; color:white; font-size:1rem; font-weight:800; cursor:pointer; }
+.daily-goal-item.is-done .daily-goal-check { background:var(--status-green); border-color:var(--status-green); }
+.daily-goal-copy { flex:1; min-width:0; }
+.daily-goal-copy strong,.daily-goal-copy span { display:block; overflow-wrap:anywhere; }
+.daily-goal-copy strong { font-size:.92rem; }
+.daily-goal-copy span { color:var(--text-muted); font-size:.75rem; margin-top:.12rem; }
+.daily-goal-item.is-done .daily-goal-copy strong { color:var(--text-muted); text-decoration:line-through; }
+.daily-goal-delete { width:32px; height:32px; border:0; border-radius:8px; background:transparent; color:var(--text-muted); font-size:1.35rem; cursor:pointer; }
+.daily-goal-delete:hover { background:var(--status-red-bg); color:var(--status-red); }
+.daily-goals-empty { display:grid; justify-items:center; text-align:center; gap:.25rem; padding:1.5rem .75rem; color:var(--text-secondary); }
+.daily-goals-empty span { font-size:1.7rem; }
+.daily-goals-empty strong { color:var(--text-primary); }
+.daily-goals-empty p { font-size:.85rem; }
+.daily-goals-win { margin-top:.85rem; padding:.7rem; border-radius:var(--radius-md); background:var(--status-green-bg); color:var(--status-green); font-weight:700; font-size:.88rem; text-align:center; }
+@media (max-width:600px) {
+  .daily-goals-card { padding:1rem; }
+  .daily-goal-fields { grid-template-columns:1fr 1fr; }
+  .daily-goal-add { grid-column:1 / -1; width:100%; }
+}
+
+
+/* Pastel Command Centre finishing touches */
+.card, .onboarding-card {
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary {
+  color: #ffffff;
+}
+.app-header {
+  border-bottom-color: var(--border-color);
 }
