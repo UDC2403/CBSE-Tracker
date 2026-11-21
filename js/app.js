@@ -1,6 +1,6 @@
 /**
  * CBSE Class 9 & 10 Study Tracker - Main Application Controller
- * UI Rendering, Screen Router, Modals & Event Listeners — Sunil Bhaiya Edition
+ * UI Rendering, Screen Router, Modals & Event Listeners — Study Command Centre
  * Hardened against extension interference, CORS restrictions, and file:// protocol caveats.
  */
 
@@ -273,6 +273,58 @@
     return `<div id="modalOverlay" class="modal-overlay"></div>`;
   }
 
+  function renderDailyGoals(profile) {
+    const today = window.TrackerStorage.getTodayString();
+    if (!profile.dailyGoals) profile.dailyGoals = {};
+    const goals = Array.isArray(profile.dailyGoals[today]) ? profile.dailyGoals[today] : [];
+    const completed = goals.filter(g => g.done).length;
+    const subjects = ["Science", "Mathematics", "Social Science", "English", "Hindi", "Other"];
+    const types = ["Blind copying", "PW lecture", "Practice", "Revision", "Homework", "Reading", "Other"];
+    return `
+      <section class="daily-goals-card">
+        <div class="daily-goals-heading">
+          <div>
+            <p class="daily-goals-eyebrow">YOUR DAILY GAME PLAN</p>
+            <h3>🎯 Today's Goals</h3>
+            <p class="daily-goals-subtitle">Small wins. Real progress. One task at a time.</p>
+          </div>
+          <div class="daily-goals-count"><strong>${completed}/${goals.length}</strong><span>completed</span></div>
+        </div>
+        <div class="daily-goals-progress"><span style="width:${goals.length ? Math.round(completed / goals.length * 100) : 0}%"></span></div>
+        <form id="dailyGoalForm" class="daily-goal-form">
+          <div class="daily-goal-input-wrap">
+            <label for="dailyGoalTitle">What do you want to finish?</label>
+            <input id="dailyGoalTitle" class="form-input" type="text" maxlength="120" placeholder="e.g. Blind copy 3 pages of Chemistry" required />
+          </div>
+          <div class="daily-goal-fields">
+            <div class="daily-goal-input-wrap">
+              <label for="dailyGoalSubject">Subject</label>
+              <select id="dailyGoalSubject" class="form-input">${subjects.map(x => `<option>${x}</option>`).join("")}</select>
+            </div>
+            <div class="daily-goal-input-wrap">
+              <label for="dailyGoalType">Task type</label>
+              <select id="dailyGoalType" class="form-input">${types.map(x => `<option>${x}</option>`).join("")}</select>
+            </div>
+            <button class="btn btn-primary daily-goal-add" type="submit">＋ Add goal</button>
+          </div>
+        </form>
+        <div class="daily-goal-list">
+          ${goals.length ? goals.map(goal => `
+            <div class="daily-goal-item ${goal.done ? "is-done" : ""}">
+              <button type="button" class="daily-goal-check" data-action="toggle-daily-goal" data-goal-id="${escapeHtml(goal.id)}" aria-label="${goal.done ? "Mark incomplete" : "Mark complete"}">${goal.done ? "✓" : ""}</button>
+              <div class="daily-goal-copy">
+                <strong>${escapeHtml(goal.title)}</strong>
+                <span>${escapeHtml(goal.subject)} · ${escapeHtml(goal.type)}</span>
+              </div>
+              <button type="button" class="daily-goal-delete" data-action="delete-daily-goal" data-goal-id="${escapeHtml(goal.id)}" aria-label="Delete goal" title="Delete goal">×</button>
+            </div>
+          `).join("") : `<div class="daily-goals-empty"><span>📝</span><strong>Your page is blank. Let's change that.</strong><p>Add one small, specific goal to get started.</p></div>`}
+        </div>
+        ${goals.length && completed === goals.length ? `<p class="daily-goals-win">🏆 Every goal completed. That's how consistency is built.</p>` : ""}
+      </section>
+    `;
+  }
+
   function renderDashboardScreen(profile) {
     const subjectsData = getSubjectsData();
     const orderedPaces = window.TrackerPlanner.getOrderedSubjectPaces(profile, subjectsData);
@@ -407,6 +459,8 @@
         `}
       </div>
     `;
+
+    html += renderDailyGoals(profile);
 
     return html;
   }
@@ -740,7 +794,7 @@
       ${profile ? `
         <div class="card">
           <h3>📅 Exam Datesheet (Class ${profile.grade})</h3>
-          <p class="text-muted">Leave any date blank while it is TBA. You can update this later.</p>
+          <p class="text-muted">Dates are optional. Leave unannounced exams blank (TBA) and add them later.</p>
           <form id="datesheetForm">
             <div class="form-group">
               <label for="dsScience">Science Exam Date</label>
@@ -836,7 +890,7 @@
 
         <div id="onboardingStep2" class="onboarding-step">
           <h3>Step 2 of 4: Exam Datesheet</h3>
-          <p>Enter dates if they have been announced. If your timetable is still TBA, leave these blank and add them later in Settings.</p>
+          <p>Enter dates if announced. Leave unannounced exams blank (TBA); you can add them later in Settings.</p>
           <form id="onboardingFormStep2">
             <div class="form-group">
               <label for="obScienceDate">Science Exam Date</label>
@@ -959,6 +1013,21 @@
         const { subjectId, chapterId, stageKey } = targetAction.dataset;
         window.TrackerStorage.updateChapterStage(state, profile.id, subjectId, chapterId, stageKey);
         render();
+      } else if (action === "toggle-daily-goal" || action === "delete-daily-goal") {
+        const profile = window.TrackerStorage.getActiveProfile(state);
+        if (!profile) return;
+        const today = window.TrackerStorage.getTodayString();
+        if (!profile.dailyGoals) profile.dailyGoals = {};
+        if (!Array.isArray(profile.dailyGoals[today])) profile.dailyGoals[today] = [];
+        const goalId = targetAction.dataset.goalId;
+        if (action === "toggle-daily-goal") {
+          const goal = profile.dailyGoals[today].find(g => g.id === goalId);
+          if (goal) goal.done = !goal.done;
+        } else {
+          profile.dailyGoals[today] = profile.dailyGoals[today].filter(g => g.id !== goalId);
+        }
+        window.TrackerStorage.saveState(state);
+        render();
       } else if (action === "view-pdf") {
         const { title, pdfPath } = targetAction.dataset;
         openPdfModal(title, pdfPath);
@@ -1030,6 +1099,30 @@
     const backupBannerBtn = document.getElementById("downloadBackupNudgeBtn");
     if (backupBannerBtn) {
       backupBannerBtn.addEventListener("click", openExportModal);
+    }
+
+    const dailyGoalForm = document.getElementById("dailyGoalForm");
+    if (dailyGoalForm) {
+      dailyGoalForm.addEventListener("submit", e => {
+        e.preventDefault();
+        const profile = window.TrackerStorage.getActiveProfile(state);
+        if (!profile) return;
+        const title = document.getElementById("dailyGoalTitle").value.trim();
+        if (!title) return;
+        const today = window.TrackerStorage.getTodayString();
+        if (!profile.dailyGoals) profile.dailyGoals = {};
+        if (!Array.isArray(profile.dailyGoals[today])) profile.dailyGoals[today] = [];
+        profile.dailyGoals[today].push({
+          id: `goal_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          title,
+          subject: document.getElementById("dailyGoalSubject").value,
+          type: document.getElementById("dailyGoalType").value,
+          done: false,
+          createdAt: new Date().toISOString()
+        });
+        window.TrackerStorage.saveState(state);
+        render();
+      });
     }
 
     if (currentScreen === "settings") {
@@ -1161,7 +1254,7 @@
 
     const diagText = [
       "=== SUNIL BHAIYA CBSE TRACKER DIAGNOSTICS ===",
-      `App Branding: Sunil Bhaiya Edition`,
+      `App Branding: CBSE Study Command Centre`,
       `Protocol: ${location.protocol}`,
       `User Agent: ${navigator.userAgent || "Unknown"}`,
       `Storage Status: ${storageDiag}`,
