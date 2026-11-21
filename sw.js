@@ -4,7 +4,8 @@
  * NEVER precaches PDFs to protect device storage quota.
  */
 
-const CACHE_NAME = "sunil-bhaiya-tracker-v2";
+const CACHE_PREFIX = "my-cbse-command-centre-";
+const CACHE_NAME = "my-cbse-command-centre-v4";
 
 const APP_SHELL_ASSETS = [
   "./",
@@ -38,7 +39,8 @@ self.addEventListener("activate", event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
+          // Remove only older caches owned by this tracker; preserve other apps' caches.
+          if (cache.startsWith(CACHE_PREFIX) && cache !== CACHE_NAME) {
             return caches.delete(cache);
           }
         })
