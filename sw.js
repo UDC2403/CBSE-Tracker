@@ -3,8 +3,8 @@
  * Precaches app shell only. Cache cleanup is restricted to this app's cache namespace.
  */
 
-const CACHE_NAME = "UDCtracker-v4";
-const CACHE_PREFIX = "UDC-tracker-";
+const CACHE_NAME = "sunil-bhaiya-tracker-v5";
+const CACHE_PREFIX = "sunil-bhaiya-tracker-";
 
 const APP_SHELL_ASSETS = [
   "./",
