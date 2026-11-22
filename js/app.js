@@ -1,6 +1,6 @@
 /**
  * CBSE Class 9 & 10 Study Tracker - Main Application Controller
- * UI Rendering, Screen Router, Modals & Event Listeners — Study Command Centre
+ * UI Rendering, Screen Router, Modals & Event Listeners — CBSE Study Command Centre
  * Hardened against extension interference, CORS restrictions, and file:// protocol caveats.
  */
 
@@ -112,7 +112,7 @@
         console.warn("matchMedia check blocked");
       }
 
-      if (savedTheme === "dark") {
+      if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
         document.documentElement.classList.add("dark");
       } else {
         document.documentElement.classList.remove("dark");
@@ -204,13 +204,13 @@
     return `
       <header class="app-header">
         <a href="#" class="brand" data-action="nav-dashboard">
-          <img src="assets/icons/logo.svg" alt="Study Command Centre Logo" class="brand-icon" />
-          <span>My Study Command Centre</span>
+          <img src="assets/icons/logo.svg" alt="Study Command Centre" class="brand-icon" />
+          <span>CBSE Study Command Centre</span>
         </a>
 
         <div class="header-actions">
           <button type="button" id="themeToggleBtn" class="btn btn-sm btn-secondary" title="Toggle Dark/Light Mode">
-            ${isDark ? "☀️ Pastel" : "🌙 Dark"}
+            ${isDark ? "☀️ Light" : "🌙 Dark"}
           </button>
 
           ${profile ? `
@@ -264,65 +264,13 @@
   function renderFooter() {
     return `
       <footer class="app-footer">
-        <div>Your personal CBSE study workspace</div>
+        <div class="footer-credit">A small tribute to Sunil Bhaiya, whose original work inspired this tracker.</div>
       </footer>
     `;
   }
 
   function renderModalContainer() {
     return `<div id="modalOverlay" class="modal-overlay"></div>`;
-  }
-
-  function renderDailyGoals(profile) {
-    const today = window.TrackerStorage.getTodayString();
-    if (!profile.dailyGoals) profile.dailyGoals = {};
-    const goals = Array.isArray(profile.dailyGoals[today]) ? profile.dailyGoals[today] : [];
-    const completed = goals.filter(g => g.done).length;
-    const subjects = ["Science", "Mathematics", "Social Science", "English", "Hindi", "Other"];
-    const types = ["Blind copying", "PW lecture", "Practice", "Revision", "Homework", "Reading", "Other"];
-    return `
-      <section class="daily-goals-card">
-        <div class="daily-goals-heading">
-          <div>
-            <p class="daily-goals-eyebrow">YOUR DAILY GAME PLAN</p>
-            <h3>🎯 Today's Goals</h3>
-            <p class="daily-goals-subtitle">Small wins. Real progress. One task at a time.</p>
-          </div>
-          <div class="daily-goals-count"><strong>${completed}/${goals.length}</strong><span>completed</span></div>
-        </div>
-        <div class="daily-goals-progress"><span style="width:${goals.length ? Math.round(completed / goals.length * 100) : 0}%"></span></div>
-        <form id="dailyGoalForm" class="daily-goal-form">
-          <div class="daily-goal-input-wrap">
-            <label for="dailyGoalTitle">What do you want to finish?</label>
-            <input id="dailyGoalTitle" class="form-input" type="text" maxlength="120" placeholder="e.g. Blind copy 3 pages of Chemistry" required />
-          </div>
-          <div class="daily-goal-fields">
-            <div class="daily-goal-input-wrap">
-              <label for="dailyGoalSubject">Subject</label>
-              <select id="dailyGoalSubject" class="form-input">${subjects.map(x => `<option>${x}</option>`).join("")}</select>
-            </div>
-            <div class="daily-goal-input-wrap">
-              <label for="dailyGoalType">Task type</label>
-              <select id="dailyGoalType" class="form-input">${types.map(x => `<option>${x}</option>`).join("")}</select>
-            </div>
-            <button class="btn btn-primary daily-goal-add" type="submit">＋ Add goal</button>
-          </div>
-        </form>
-        <div class="daily-goal-list">
-          ${goals.length ? goals.map(goal => `
-            <div class="daily-goal-item ${goal.done ? "is-done" : ""}">
-              <button type="button" class="daily-goal-check" data-action="toggle-daily-goal" data-goal-id="${escapeHtml(goal.id)}" aria-label="${goal.done ? "Mark incomplete" : "Mark complete"}">${goal.done ? "✓" : ""}</button>
-              <div class="daily-goal-copy">
-                <strong>${escapeHtml(goal.title)}</strong>
-                <span>${escapeHtml(goal.subject)} · ${escapeHtml(goal.type)}</span>
-              </div>
-              <button type="button" class="daily-goal-delete" data-action="delete-daily-goal" data-goal-id="${escapeHtml(goal.id)}" aria-label="Delete goal" title="Delete goal">×</button>
-            </div>
-          `).join("") : `<div class="daily-goals-empty"><span>📝</span><strong>Your page is blank. Let's change that.</strong><p>Add one small, specific goal to get started.</p></div>`}
-        </div>
-        ${goals.length && completed === goals.length ? `<p class="daily-goals-win">🏆 Every goal completed. That's how consistency is built.</p>` : ""}
-      </section>
-    `;
   }
 
   function renderDashboardScreen(profile) {
@@ -459,8 +407,6 @@
         `}
       </div>
     `;
-
-    html += renderDailyGoals(profile);
 
     return html;
   }
@@ -794,19 +740,18 @@
       ${profile ? `
         <div class="card">
           <h3>📅 Exam Datesheet (Class ${profile.grade})</h3>
-          <p class="text-muted">Dates are optional. Leave unannounced exams blank (TBA) and add them later.</p>
           <form id="datesheetForm">
             <div class="form-group">
-              <label for="dsScience">Science Exam Date</label>
-              <input type="date" id="dsScience" class="form-input" value="${profile.datesheet ? profile.datesheet.science || "" : ""}" />
+              <label for="dsScience">Science Exam Date <span class="tba-inline">TBA allowed</span></label>
+              <input type="date" id="dsScience" class="form-input" value="${profile.datesheet ? profile.datesheet.science || "" : ""}" /><small class="date-tba-note">Leave blank = TBA (not announced)</small>
             </div>
             <div class="form-group">
-              <label for="dsMaths">Mathematics Exam Date</label>
-              <input type="date" id="dsMaths" class="form-input" value="${profile.datesheet ? profile.datesheet.maths || "" : ""}" />
+              <label for="dsMaths">Mathematics Exam Date <span class="tba-inline">TBA allowed</span></label>
+              <input type="date" id="dsMaths" class="form-input" value="${profile.datesheet ? profile.datesheet.maths || "" : ""}" /><small class="date-tba-note">Leave blank = TBA (not announced)</small>
             </div>
             <div class="form-group">
-              <label for="dsSst">Social Science Exam Date</label>
-              <input type="date" id="dsSst" class="form-input" value="${profile.datesheet ? profile.datesheet.sst || "" : ""}" />
+              <label for="dsSst">Social Science Exam Date <span class="tba-inline">TBA allowed</span></label>
+              <input type="date" id="dsSst" class="form-input" value="${profile.datesheet ? profile.datesheet.sst || "" : ""}" /><small class="date-tba-note">Leave blank = TBA (not announced)</small>
             </div>
             <button type="submit" class="btn btn-primary">Save Datesheet</button>
           </form>
@@ -890,19 +835,19 @@
 
         <div id="onboardingStep2" class="onboarding-step">
           <h3>Step 2 of 4: Exam Datesheet</h3>
-          <p>Enter dates if announced. Leave unannounced exams blank (TBA); you can add them later in Settings.</p>
+          <p>Exam dates are optional. Leave any unannounced exam blank — it will remain TBA, and you can add the date later in Settings.</p>
           <form id="onboardingFormStep2">
             <div class="form-group">
-              <label for="obScienceDate">Science Exam Date</label>
-              <input type="date" id="obScienceDate" class="form-input" />
+              <label for="obScienceDate">Science Exam Date <span class="tba-inline">TBA allowed</span></label>
+              <input type="date" id="obScienceDate" class="form-input" /><small class="date-tba-note">TBA — leave empty until announced</small>
             </div>
             <div class="form-group">
-              <label for="obMathsDate">Mathematics Exam Date</label>
-              <input type="date" id="obMathsDate" class="form-input" />
+              <label for="obMathsDate">Mathematics Exam Date <span class="tba-inline">TBA allowed</span></label>
+              <input type="date" id="obMathsDate" class="form-input" /><small class="date-tba-note">TBA — leave empty until announced</small>
             </div>
             <div class="form-group">
-              <label for="obSstDate">Social Science Exam Date</label>
-              <input type="date" id="obSstDate" class="form-input" />
+              <label for="obSstDate">Social Science Exam Date <span class="tba-inline">TBA allowed</span></label>
+              <input type="date" id="obSstDate" class="form-input" /><small class="date-tba-note">TBA — leave empty until announced</small>
             </div>
             <div id="dateWarningMsg" style="color:var(--status-amber); font-size:var(--font-size-sm); margin-bottom:0.5rem; display:none;"></div>
             <button type="submit" class="btn btn-primary btn-block">Next: Select Exam Syllabus →</button>
@@ -1013,21 +958,6 @@
         const { subjectId, chapterId, stageKey } = targetAction.dataset;
         window.TrackerStorage.updateChapterStage(state, profile.id, subjectId, chapterId, stageKey);
         render();
-      } else if (action === "toggle-daily-goal" || action === "delete-daily-goal") {
-        const profile = window.TrackerStorage.getActiveProfile(state);
-        if (!profile) return;
-        const today = window.TrackerStorage.getTodayString();
-        if (!profile.dailyGoals) profile.dailyGoals = {};
-        if (!Array.isArray(profile.dailyGoals[today])) profile.dailyGoals[today] = [];
-        const goalId = targetAction.dataset.goalId;
-        if (action === "toggle-daily-goal") {
-          const goal = profile.dailyGoals[today].find(g => g.id === goalId);
-          if (goal) goal.done = !goal.done;
-        } else {
-          profile.dailyGoals[today] = profile.dailyGoals[today].filter(g => g.id !== goalId);
-        }
-        window.TrackerStorage.saveState(state);
-        render();
       } else if (action === "view-pdf") {
         const { title, pdfPath } = targetAction.dataset;
         openPdfModal(title, pdfPath);
@@ -1099,30 +1029,6 @@
     const backupBannerBtn = document.getElementById("downloadBackupNudgeBtn");
     if (backupBannerBtn) {
       backupBannerBtn.addEventListener("click", openExportModal);
-    }
-
-    const dailyGoalForm = document.getElementById("dailyGoalForm");
-    if (dailyGoalForm) {
-      dailyGoalForm.addEventListener("submit", e => {
-        e.preventDefault();
-        const profile = window.TrackerStorage.getActiveProfile(state);
-        if (!profile) return;
-        const title = document.getElementById("dailyGoalTitle").value.trim();
-        if (!title) return;
-        const today = window.TrackerStorage.getTodayString();
-        if (!profile.dailyGoals) profile.dailyGoals = {};
-        if (!Array.isArray(profile.dailyGoals[today])) profile.dailyGoals[today] = [];
-        profile.dailyGoals[today].push({
-          id: `goal_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-          title,
-          subject: document.getElementById("dailyGoalSubject").value,
-          type: document.getElementById("dailyGoalType").value,
-          done: false,
-          createdAt: new Date().toISOString()
-        });
-        window.TrackerStorage.saveState(state);
-        render();
-      });
     }
 
     if (currentScreen === "settings") {
@@ -1253,7 +1159,7 @@
     }
 
     const diagText = [
-      "=== SUNIL BHAIYA CBSE TRACKER DIAGNOSTICS ===",
+      "=== CBSE STUDY COMMAND CENTRE DIAGNOSTICS ===",
       `App Branding: CBSE Study Command Centre`,
       `Protocol: ${location.protocol}`,
       `User Agent: ${navigator.userAgent || "Unknown"}`,
